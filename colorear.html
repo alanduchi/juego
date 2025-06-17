@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Colorea la Obra de Arte</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <style>
+    body {
+      text-align: center;
+      font-family: sans-serif;
+      background: #f0f0f0;
+      margin: 0;
+      padding: 10px;
+    }
+    canvas {
+      border: 2px solid black;
+      background: white;
+      touch-action: none;
+      width: 100%;
+      max-width: 900px;
+      height: auto;
+    }
+    .palette {
+      margin: 10px;
+    }
+    .color-btn {
+      width: 30px;
+      height: 30px;
+      display: inline-block;
+      margin: 3px;
+      border: 2px solid #666;
+      cursor: pointer;
+    }
+    button {
+      margin-top: 10px;
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>🎨 Colorea la Obra de Arte</h2>
+
+  <div class="palette" id="palette">
+    <div class="color-btn" style="background:black" onclick="setColor('black')"></div>
+    <div class="color-btn" style="background:red" onclick="setColor('red')"></div>
+    <div class="color-btn" style="background:blue" onclick="setColor('blue')"></div>
+    <div class="color-btn" style="background:green" onclick="setColor('green')"></div>
+    <div class="color-btn" style="background:yellow" onclick="setColor('yellow')"></div>
+    <div class="color-btn" style="background:white" onclick="setColor('white')">🧽</div>
+  </div>
+
+  <canvas id="drawCanvas" width="900" height="600"></canvas>
+
+  <br>
+  <button onclick="saveDrawing()">💾 Guardar</button>
+  <button onclick="window.location.href='mostrar.html'">🖼️ Ver dibujos</button>
+
+  <script>
+    const canvas = document.getElementById('drawCanvas');
+    const ctx = canvas.getContext('2d');
+    let painting = false;
+    let currentColor = 'black';
+
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    function setColor(color) {
+      currentColor = color;
+    }
+
+    function getPos(evt) {
+      const rect = canvas.getBoundingClientRect();
+      if (evt.touches) {
+        return {
+          x: evt.touches[0].clientX - rect.left,
+          y: evt.touches[0].clientY - rect.top
+        };
+      } else {
+        return {
+          x: evt.clientX - rect.left,
+          y: evt.clientY - rect.top
+        };
+      }
+    }
+
+    function startDrawing(e) {
+      e.preventDefault();
+      painting = true;
+      draw(e);
+    }
+
+    function endDrawing(e) {
+      e.preventDefault();
+      painting = false;
+      ctx.beginPath();
+    }
+
+    function draw(e) {
+      if (!painting) return;
+      e.preventDefault();
+      const pos = getPos(e);
+      ctx.lineWidth = 5;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = currentColor;
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    }
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mouseup', endDrawing);
+    canvas.addEventListener('mousemove', draw);
+
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchend', endDrawing);
+    canvas.addEventListener('touchmove', draw, { passive: false });
+
+    function saveDrawing() {
+      const dataURL = canvas.toDataURL();
+      let dibujos = JSON.parse(localStorage.getItem('misDibujosArte')) || [];
+      dibujos.push(dataURL);
+      localStorage.setItem('misDibujosArte', JSON.stringify(dibujos));
+      alert('¡Dibujo guardado!');
+    }
+  </script>
+</body>
+</html>

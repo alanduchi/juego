@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Rompecabezas: Máscara de Oro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+    canvas {
+      border: 2px solid #b47f00;
+      max-width: 100%;
+      height: auto;
+      touch-action: none;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      background-color: #b47f00;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #945e00;
+    }
+    #message {
+      font-size: 1.1rem;
+      color: green;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Rompecabezas: Máscara de Oro</h1>
+  <canvas id="puzzle" width="900" height="600"></canvas>
+  <div id="message"></div>
+  <button id="resetBtn">🔄 Reiniciar</button>
+  <br>
+  <button onclick="location.href='colorear.html'">🎨 Siguiente: Colorea la obra</button>
+
+  <script>
+    const canvas = document.getElementById("puzzle");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.src = "mascara.jpg";
+
+    const rows = 3, cols = 3;
+    const pieceWidth = canvas.width / cols;
+    const pieceHeight = canvas.height / rows;
+    let pieces = [];
+    let selected = null;
+
+    function inicializarPiezas() {
+      pieces = [];
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          pieces.push({ sx: x, sy: y, x: 0, y: 0 });
+        }
+      }
+      shufflePieces();
+    }
+
+    function shufflePieces() {
+      const positions = [];
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          positions.push({ x, y });
+        }
+      }
+      positions.sort(() => Math.random() - 0.5);
+      pieces.forEach((p, i) => {
+        p.x = positions[i].x;
+        p.y = positions[i].y;
+      });
+    }
+
+    function drawPuzzle() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pieces.forEach(p => {
+        ctx.drawImage(
+          img,
+          p.sx * pieceWidth,
+          p.sy * pieceHeight,
+          pieceWidth,
+          pieceHeight,
+          p.x * pieceWidth,
+          p.y * pieceHeight,
+          pieceWidth,
+          pieceHeight
+        );
+        ctx.strokeRect(p.x * pieceWidth, p.y * pieceHeight, pieceWidth, pieceHeight);
+      });
+    }
+
+    function getPieceAtPos(x, y) {
+      const gridX = Math.floor(x / pieceWidth);
+      const gridY = Math.floor(y / pieceHeight);
+      return pieces.find(p => p.x === gridX && p.y === gridY);
+    }
+
+    function handleTap(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      const tapped = getPieceAtPos(x, y);
+
+      if (!tapped) return;
+
+      if (!selected) {
+        selected = tapped;
+      } else {
+        if (selected !== tapped) {
+          [selected.x, selected.y, tapped.x, tapped.y] = [tapped.x, tapped.y, selected.x, selected.y];
+          drawPuzzle();
+          checkWin();
+        }
+        selected = null;
+      }
+    }
+
+    canvas.addEventListener("mousedown", e => handleTap(e.clientX, e.clientY));
+    canvas.addEventListener("touchstart", e => {
+      const touch = e.touches[0];
+      handleTap(touch.clientX, touch.clientY);
+      e.preventDefault();
+    }, { passive: false });
+
+    function checkWin() {
+      const won = pieces.every(p => p.x === p.sx && p.y === p.sy);
+      document.getElementById("message").textContent = won ? "¡Felicidades! Rompecabezas completado." : "";
+    }
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      inicializarPiezas();
+      drawPuzzle();
+      document.getElementById("message").textContent = "";
+      selected = null;
+    });
+
+    img.onload = () => {
+      inicializarPiezas();
+      drawPuzzle();
+    };
+  </script>
+</body>
+</html>
